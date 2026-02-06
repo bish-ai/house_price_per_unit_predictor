@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction - 3D ML Visualization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .content > * {
+            pointer-events: auto;
+        }
+
+        header {
+            padding: 2rem;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.2rem;
+        }
+
+        .section {
+            margin: 4rem auto;
+            max-width: 1200px;
+            padding: 2rem;
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section h2 {
+            color: #00d4ff;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.1));
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-label {
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .code-block {
+            background: #1a1a1a;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 3;
+            background: rgba(20, 20, 20, 0.9);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: linear-gradient(45deg, #00d4ff, #7c3aed);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pipeline-step {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(0, 212, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #00d4ff;
+        }
+
+        .arrow {
+            color: #7c3aed;
+            font-size: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="content">
+        <header>
+            <h1>🏠 House Price Prediction ML Model</h1>
+            <p class="subtitle">Advanced Machine Learning with PCA & SGD Regression</p>
+        </header>
+
+        <div class="section">
+            <h2>📊 Model Performance Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">77.3%</div>
+                    <div class="metric-label">R² Score (SGDRegressor)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4.73</div>
+                    <div class="metric-label">Mean Absolute Error</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">32.47</div>
+                    <div class="metric-label">Mean Squared Error</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">414</div>
+                    <div class="metric-label">Total Records</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Feature Engineering Pipeline</h2>
+            <div class="pipeline-flow">
+                <div class="pipeline-step">
+                    <strong>1. Data Loading</strong>
+                    <p style="color: #888; margin-top: 0.5rem; font-size: 0.9rem;">Real Estate CSV</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>2. Preprocessing</strong>
+                    <p style="color: #888; margin-top: 0.5rem; font-size: 0.9rem;">StandardScaler</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>3. PCA</strong>
+                    <p style="color: #888; margin-top: 0.5rem; font-size: 0.9rem;">2 Components</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>4. Power Transform</strong>
+                    <p style="color: #888; margin-top: 0.5rem; font-size: 0.9rem;">Normalization</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>5. Polynomial</strong>
+                    <p style="color: #888; margin-top: 0.5rem; font-size: 0.9rem;">Degree 2</p>
+                </div>
+                <div class="arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>6. SGD Model</strong>
+                    <p style="color: #888; margin-top: 0.5rem; font-size: 0.9rem;">Prediction</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Features Used</h2>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <strong>🏘️ House Age</strong>
+                    <p style="color: #888; font-size: 0.9rem;">Building age in years</p>
+                </div>
+                <div class="feature-item">
+                    <strong>🚇 MRT Distance</strong>
+                    <p style="color: #888; font-size: 0.9rem;">Distance to nearest station</p>
+                </div>
+                <div class="feature-item">
+                    <strong>🏪 Convenience Stores</strong>
+                    <p style="color: #888; font-size: 0.9rem;">Number nearby</p>
+                </div>
+                <div class="feature-item">
+                    <strong>🌍 Latitude</strong>
+                    <p style="color: #888; font-size: 0.9rem;">Geographic coordinate</p>
+                </div>
+                <div class="feature-item">
+                    <strong>🌍 Longitude</strong>
+                    <p style="color: #888; font-size: 0.9rem;">Geographic coordinate</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💻 Key Code Snippets</h2>
+            
+            <h3 style="color: #00d4ff; margin-top: 2rem;">Outlier Removal (IQR Method)</h3>
+            <div class="code-block">
+<pre>for column in x_train.columns:
+    Q1 = x_train[column].quantile(0.25)
+    Q3 = x_train[column].quantile(0.75)
+    IQR = Q3 - Q1
+    
+    upper_bound = Q3 + 1.5 * IQR
+    lower_bound = Q1 - 1.5 * IQR
+    
+    x_train[column] = np.clip(x_train[column], 
+                              lower_bound, upper_bound)</pre>
+            </div>
+
+            <h3 style="color: #00d4ff; margin-top: 2rem;">SGDRegressor with Polynomial Features</h3>
+            <div class="code-block">
+<pre>pf_model = PolynomialFeatures(degree=2)
+x_train_poly = pf_model.fit_transform(x_train_transformed)
+x_test_poly = pf_model.transform(x_test_transformed)
+
+sgdr = SGDRegressor()
+sgdr.fit(x_train_poly, y_train.values.ravel())
+sgdr_pred = sgdr.predict(x_test_poly)
+
+r2_score = 0.7726  # 77.26% accuracy</pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Model Comparison</h2>
+            <table style="width: 100%; margin-top: 1rem; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: rgba(0, 212, 255, 0.2);">
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #00d4ff;">Model</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #00d4ff;">R² Score</th>
+                        <th style="padding: 1rem; text-align: left; border-bottom: 2px solid #00d4ff;">Features</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <td style="padding: 1rem;">Linear Regression</td>
+                        <td style="padding: 1rem; color: #7c3aed;">Baseline</td>
+                        <td style="padding: 1rem;">2 PCA Components</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <td style="padding: 1rem;"><strong>SGDRegressor (Poly)</strong></td>
+                        <td style="padding: 1rem; color: #00d4ff;"><strong>77.3%</strong></td>
+                        <td style="padding: 1rem;">Polynomial (degree=2)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Next Steps</h2>
+            <ul style="line-height: 2; color: #ccc; margin-left: 2rem;">
+                <li>Experiment with different polynomial degrees</li>
+                <li>Try ensemble methods (Random Forest, XGBoost)</li>
+                <li>Perform hyperparameter tuning with GridSearchCV</li>
+                <li>Add cross-validation for robust evaluation</li>
+                <li>Feature importance analysis</li>
+                <li>Deploy model with FastAPI or Flask</li>
+            </ul>
+        </div>
+
+        <div style="height: 100px;"></div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="resetCamera()">Reset Camera</button>
+        <button class="control-btn" onclick="toggleAnimation()">Toggle Rotation</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        let scene, camera, renderer, dataPoints, animating = true;
+
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x0a0a0a, 0.002);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 50;
+            camera.position.y = 20;
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x0a0a0a, 1);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(ambientLight);
+
+            const pointLight1 = new THREE.PointLight(0x00d4ff, 1);
+            pointLight1.position.set(50, 50, 50);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0x7c3aed, 1);
+            pointLight2.position.set(-50, -50, 50);
+            scene.add(pointLight2);
+
+            // Create 3D data visualization
+            createDataPoints();
+
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(100, 20, 0x00d4ff, 0x444444);
+            scene.add(gridHelper);
+
+            // Axes helper
+            const axesHelper = new THREE.AxesHelper(30);
+            scene.add(axesHelper);
+
+            // Window resize handler
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function createDataPoints() {
+            dataPoints = new THREE.Group();
+
+            // Generate sample data points representing the ML model space
+            for (let i = 0; i < 200; i++) {
+                const geometry = new THREE.SphereGeometry(0.3, 8, 8);
+                
+                // Color based on "price" value
+                const price = Math.random();
+                const color = new THREE.Color();
+                color.setHSL(0.6 - price * 0.4, 1, 0.5);
+                
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.3,
+                    shininess: 100
+                });
+                
+                const sphere = new THREE.Mesh(geometry, material);
+                
+                // Position based on "features"
+                const x = (Math.random() - 0.5) * 60;
+                const y = price * 40 - 20;
+                const z = (Math.random() - 0.5) * 60;
+                
+                sphere.position.set(x, y, z);
+                sphere.userData = { price: price };
+                
+                dataPoints.add(sphere);
+            }
+
+            scene.add(dataPoints);
+
+            // Add connecting lines
+            const lineGeometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+
+            for (let i = 0; i < 50; i++) {
+                const point1 = dataPoints.children[Math.floor(Math.random() * dataPoints.children.length)];
+                const point2 = dataPoints.children[Math.floor(Math.random() * dataPoints.children.length)];
+
+                positions.push(point1.position.x, point1.position.y, point1.position.z);
+                positions.push(point2.position.x, point2.position.y, point2.position.z);
+
+                const color = new THREE.Color(0x00d4ff);
+                colors.push(color.r, color.g, color.b);
+                colors.push(color.r, color.g, color.b);
+            }
+
+            lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            lineGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const lineMaterial = new THREE.LineBasicMaterial({ 
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.2
+            });
+
+            const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+            scene.add(lines);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (animating) {
+                // Rotate data points
+                if (dataPoints) {
+                    dataPoints.rotation.y += 0.002;
+                }
+
+                // Camera orbit
+                camera.position.x = Math.sin(Date.now() * 0.0001) * 60;
+                camera.position.z = Math.cos(Date.now() * 0.0001) * 60;
+                camera.lookAt(scene.position);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function resetCamera() {
+            camera.position.set(0, 20, 50);
+            camera.lookAt(scene.position);
+        }
+
+        function toggleAnimation() {
+            animating = !animating;
+        }
+
+        // Initialize and start animation
+        init();
+        animate();
+    </script>
+</body>
+</html>
